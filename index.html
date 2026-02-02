@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moral Classes</title>
+    <style>
+        :root {
+            /* Palette */
+            --primary: #0f172a; 
+            --primary-light: #1e293b;
+            --accent: #6366f1; 
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --text-main: #334155;
+            --text-light: #94a3b8;
+            --danger: #ef4444;
+            --danger-bg: #fef2f2;
+            --success: #10b981;
+            --success-bg: #ecfdf5;
+            --warning: #f59e0b;
+            --warning-bg: #fffbeb;
+            --border: #e2e8f0;
+            
+            --radius: 12px;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+
+        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; -webkit-tap-highlight-color: transparent; outline: none; }
+        body { margin: 0; padding: 0; background: var(--bg); color: var(--text-main); padding-bottom: 80px; }
+
+        /* Splash Screen */
+        #splash-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--primary); color: white; z-index: 9999;
+            display: flex; justify-content: center; align-items: center;
+            flex-direction: column; transition: opacity 0.5s ease;
+        }
+        #splash-screen h1 { font-size: 1.8rem; margin: 0; animation: fadeIn 1s ease; }
+
+        /* --- Transitions --- */
+        .screen { display: none; animation: fadeIn 0.3s ease; padding: 16px; max-width: 500px; margin: 0 auto; }
+        .screen.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- Components --- */
+        .header { display: flex; align-items: center; justify-content: space-between; padding: 10px 0 20px 0; }
+        .header h2 { margin: 0; font-size: 1.2rem; color: var(--accent); font-weight: 700; }
+        .back-icon { font-size: 1.2rem; color: var(--text-main); cursor: pointer; padding: 5px; }
+
+        /* Cards */
+        .card {
+            background: var(--surface); border-radius: var(--radius); padding: 16px;
+            box-shadow: var(--shadow); margin-bottom: 12px; border: 1px solid var(--border);
+            position: relative;
+        }
+        .batch-card { background: #eff6ff; border: none; padding: 20px; }
+        .batch-card h3 { margin: 0 0 10px 0; color: var(--primary); font-size: 1.1rem; }
+        .batch-info { display: flex; align-items: center; gap: 8px; color: #64748b; font-size: 0.9rem; margin-bottom: 5px; }
+        .batch-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; font-weight: 700; color: var(--primary); }
+        .arrow-btn { background: white; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow); cursor: pointer; }
+
+        /* Buttons */
+        .btn {
+            background: var(--primary); color: white; width: 100%; padding: 14px;
+            border: none; border-radius: 8px; font-weight: 600; font-size: 1rem;
+            cursor: pointer; margin-top: 10px;
+        }
+        .btn:active { transform: scale(0.98); }
+        .btn.outline { background: transparent; border: 1px solid var(--border); color: var(--text-main); }
+        .btn.danger { background: var(--danger); }
+        
+        /* FAB */
+        .fab {
+            position: fixed; bottom: 20px; right: 20px;
+            background: var(--primary); color: white; width: 56px; height: 56px;
+            border-radius: 50%; display: flex; justify-content: center; align-items: center;
+            font-size: 28px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); cursor: pointer; z-index: 100;
+        }
+
+        /* Forms & Inputs */
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; margin-bottom: 6px; font-size: 0.85rem; font-weight: 600; color: var(--text-main); }
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px;
+            font-size: 1rem; background: var(--surface); color: var(--primary);
+        }
+        .form-group input:focus { border-color: var(--accent); }
+
+        /* --- Student Profile --- */
+        .profile-header { text-align: center; margin-bottom: 20px; }
+        .profile-img { width: 90px; height: 90px; border-radius: 50%; object-fit: cover; margin-bottom: 10px; border: 3px solid white; box-shadow: var(--shadow); background: #cbd5e1; }
+        .profile-name { font-size: 1.2rem; font-weight: 700; color: var(--primary); margin: 0; }
+        .profile-sub { color: var(--text-light); font-size: 0.9rem; margin: 2px 0; }
+
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+        .stat-card { background: var(--surface); padding: 15px; border-radius: var(--radius); border: 1px solid var(--border); cursor: pointer; }
+        .stat-label { font-size: 0.8rem; color: var(--text-light); display: flex; align-items: center; gap: 5px; }
+        .stat-val { font-size: 1.5rem; font-weight: 700; margin-top: 5px; color: var(--primary); }
+
+        /* --- Attendance --- */
+        .att-row { display: flex; justify-content: space-between; align-items: center; background: var(--surface); padding: 15px; border-radius: var(--radius); margin-bottom: 10px; border: 1px solid var(--border); }
+        .att-controls { display: flex; gap: 8px; }
+        .att-btn {
+            padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 600;
+            border: 1px solid var(--border); background: white; color: var(--text-light); cursor: pointer;
+            display: flex; align-items: center; gap: 5px;
+        }
+        .att-btn.present.active { background: var(--success); color: white; border-color: var(--success); }
+        .att-btn.absent.active { background: var(--danger); color: white; border-color: var(--danger); }
+        .att-btn.leave.active { background: var(--border); color: var(--text-main); border-color: var(--text-light); }
+
+        /* --- Filters & Fees --- */
+        .filter-box { background: var(--surface); padding: 12px; border-radius: var(--radius); margin-bottom: 15px; display: flex; gap: 10px; align-items: center; border: 1px solid var(--border); }
+        .filter-inp { width: 80px !important; padding: 6px !important; font-size: 0.9rem !important; margin: 0 !important; }
+        .fee-card { padding: 15px; border-radius: var(--radius); margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .fee-card.unpaid { background: var(--danger-bg); border: 1px solid #fca5a5; }
+        .fee-card.partial { background: var(--warning-bg); border: 1px solid #fcd34d; }
+        .fee-card.paid { background: var(--success-bg); border: 1px solid #86efac; }
+
+        /* --- Modals --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(2px);
+            display: none; justify-content: center; align-items: flex-end;
+            z-index: 2000;
+        }
+        .modal {
+            background: white; width: 100%; max-width: 500px; padding: 24px;
+            border-radius: 20px 20px 0 0; animation: slideUp 0.3s ease;
+            max-height: 90vh; overflow-y: auto;
+        }
+        @media(min-width: 500px) {
+            .modal-overlay { align-items: center; }
+            .modal { border-radius: 20px; width: 400px; }
+        }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+        .photo-picker {
+            width: 80px; height: 80px; border-radius: 50%; border: 2px dashed var(--text-light);
+            margin: 0 auto 15px auto; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; cursor: pointer; color: var(--text-light);
+        }
+
+        /* Confirmation Modal */
+        .confirm-actions { display: flex; gap: 10px; margin-top: 20px; }
+        .confirm-actions .btn { margin-top: 0; }
+        .btn-cancel { background: #e2e8f0; color: #334155; }
+    </style>
+</head>
+<body>
+
+    <!-- SPLASH SCREEN -->
+    <div id="splash-screen">
+        <h1>Welcome Vyas Maharaj</h1>
+    </div>
+
+    <!-- HOME SCREEN -->
+    <div id="view-home" class="screen active">
+        <div class="header">
+            <h2>Moral Classes</h2>
+            <div style="font-size:1.5rem">🏠</div>
+        </div>
+        
+        <h3 style="margin: 10px 0; color: var(--primary);">Your Batches</h3>
+        <div id="batch-list"></div>
+        
+        <div id="empty-state" style="text-align:center; margin-top:50px; display:none; color:var(--text-light);">
+            <p>No batches found.</p>
+        </div>
+
+        <div class="fab" onclick="openModal('modal-batch')">+</div>
+    </div>
+
+    <!-- BATCH DASHBOARD -->
+    <div id="view-batch" class="screen">
+        <div class="header">
+            <span class="back-icon" onclick="nav('view-home')">❮ Back</span>
+            <h2 id="lbl-batch-name">Class 10th</h2>
+        </div>
+
+        <div class="stat-grid">
+            <div class="stat-card" onclick="openView('view-students')">
+                <div class="stat-label">👥 Students</div>
+                <div class="stat-val" id="count-students">0</div>
+            </div>
+            <div class="stat-card" onclick="openView('view-attendance')">
+                <div class="stat-label">📅 Attendance</div>
+                <div class="stat-val" style="font-size:1rem; margin-top:8px;">Mark Today</div>
+            </div>
+            <div class="stat-card" onclick="openView('view-tests')">
+                <div class="stat-label">📝 Tests</div>
+                <div class="stat-val" style="font-size:1rem; margin-top:8px;">Manage</div>
+            </div>
+            <div class="stat-card" onclick="openView('view-fees')">
+                <div class="stat-label">₹ Fees Due</div>
+                <div class="stat-val text-danger" id="batch-total-due">0</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- STUDENTS LIST -->
+    <div id="view-students" class="screen">
+        <div class="header">
+            <span class="back-icon" onclick="nav('view-batch')">❮ Batch</span>
+            <h2>Students</h2>
+        </div>
+        <div id="student-list"></div>
+        <div class="fab" onclick="openModal('modal-student')">+</div>
+    </div>
+
+    <!-- STUDENT PROFILE -->
+    <div id="view-profile" class="screen">
+        <div class="header">
+            <span class="back-icon" onclick="nav('view-students')">❮ Students</span>
+            <h2>Profile</h2>
+        </div>
+
+        <div class="profile-header">
+            <img id="p-img" src="" class="profile-img">
+            <h2 id="p-name" class="profile-name">Rahul Kumar</h2>
+            <p id="p-parent" class="profile-sub">Parent: Suresh Kumar</p>
+            <p id="p-contact" class="profile-sub">📞 9876543210</p>
+            <p id="p-address" class="profile-sub">📍 123 Street, City</p>
+        </div>
+
+        <div class="stat-grid">
+            <!-- Changed onclick to show att history specifically -->
+            <div class="stat-card" style="background:#eff6ff; border-color:#dbeafe" onclick="showStudentAttDetails()">
+                <div class="stat-label" style="color:#1d4ed8">📅 Attendance</div>
+                <div class="stat-val" style="color:#1e40af" id="p-att-val">85%</div>
+            </div>
+            <div class="stat-card" style="background:#faf5ff; border-color:#f3e8ff" onclick="showHistory('test')">
+                <div class="stat-label" style="color:#7e22ce">📝 Avg Marks</div>
+                <div class="stat-val" style="color:#6b21a8" id="p-mark-val">72%</div>
+            </div>
+            <div class="stat-card" style="grid-column:span 2; background:#fff7ed; border-color:#ffedd5" onclick="showHistory('fee')">
+                <div class="stat-label" style="color:#c2410c">₹ Fee Dues</div>
+                <div class="stat-val" style="color:#9a3412" id="p-fee-val">₹500</div>
+            </div>
+        </div>
+
+        <button class="btn danger" onclick="reqDeleteStudent()">Delete Student</button>
+    </div>
+
+    <!-- ATTENDANCE -->
+    <div id="view-attendance" class="screen">
+        <div class="header">
+            <span class="back-icon" onclick="nav('view-batch')">❮ Batch</span>
+            <h2>Attendance</h2>
+        </div>
+
+        <div style="background:var(--surface); padding:5px; border-radius:8px; border:1px solid var(--border); display:flex; margin-bottom:15px;">
+            <button class="btn outline" style="margin:0; border:none; background:#eff6ff; color:var(--primary);" id="tab-mark" onclick="toggleAttMode('mark')">Mark Today</button>
+            <button class="btn outline" style="margin:0; border:none;" id="tab-hist" onclick="toggleAttMode('hist')">History</button>
+        </div>
+
+        <!-- Mark Mode -->
+        <div id="att-mark-area">
+            <div style="text-align:center; margin-bottom:15px; color:var(--text-light); font-weight:600;">
+                <span id="lbl-today"></span>
+            </div>
+            <div id="att-success-msg" style="display:none; background:var(--success-bg); color:#065f46; padding:15px; border-radius:8px; text-align:center; margin-bottom:10px; border:1px solid #6ee7b7;">
+                ✅ Attendance Submitted
+            </div>
+            <div id="att-list"></div>
+            <button id="btn-submit-att" class="btn" onclick="reqSubmitAtt()">Submit Attendance</button>
+        </div>
+
+        <!-- History Mode -->
+        <div id="att-hist-area" style="display:none;">
+            <div id="att-hist-list"></div>
+        </div>
+    </div>
+
+    <!-- TESTS -->
+    <div id="view-tests" class="screen">
+        <div class="header">
+            <span class="back-icon" onclick="nav('view-batch')">❮ Batch</span>
+            <h2>Tests</h2>
+        </div>
+        <button class="btn outline" style="margin-bottom:15px;" onclick="openModal('modal-test')">+ Create Test</button>
+        <div id="test-list"></div>
+    </div>
+
+    <!-- TEST MARKS -->
+    <div id="view-marks" class="screen">
+        <div class="header">
+            <span class="back-icon" onclick="nav('view-tests')">❮ Tests</span>
+            <h2 id="lbl-test-name">Test Name</h2>
+        </div>
+        
+        <div class="filter-box">
+            <span style="font-size:0.85rem; font-weight:600;">Filters:</span>
+            <input type="number" id="f-min" class="filter-inp" placeholder="Below" onkeyup="renderMarks()">
+            <input type="number" id="f-max" class="filter-inp" placeholder="Above" onkeyup="renderMarks()">
+        </div>
+
+        <div id="marks-list"></div>
+        <button id="btn-lock-marks" class="btn" onclick="reqLockTest()">Finalize Marks</button>
+    </div>
+
+    <!-- FEES -->
+    <div id="view-fees" class="screen">
+        <div class="header">
+            <span class="back-icon" onclick="nav('view-batch')">❮ Batch</span>
+            <h2>Fee Status</h2>
+        </div>
+        <div id="fee-list"></div>
+    </div>
+
+    <!-- MODALS -->
+    
+    <!-- Add Batch -->
+    <div id="modal-batch" class="modal-overlay">
+        <div class="modal">
+            <div class="header"><h2>New Batch</h2><span class="back-icon" onclick="closeModal('modal-batch')">✕</span></div>
+            <div class="form-group"><label>Batch Name</label><input type="text" id="ib-name" placeholder="e.g. Class 10th Science"></div>
+            <!-- Changed Timing to Time Inputs -->
+            <div class="form-group">
+                <label>Timing (From - To)</label>
+                <div style="display:flex; gap:10px;">
+                    <input type="time" id="ib-time-start">
+                    <input type="time" id="ib-time-end">
+                </div>
+            </div>
+            <div class="form-group"><label>Fee Per Student (₹)</label><input type="number" id="ib-fee" placeholder="500"></div>
+            <button class="btn" onclick="addBatch()">Create Batch</button>
+        </div>
+    </div>
+
+    <!-- Add Student -->
+    <div id="modal-student" class="modal-overlay">
+        <div class="modal">
+            <div class="header"><h2>Add Student</h2><span class="back-icon" onclick="closeModal('modal-student')">✕</span></div>
+            
+            <div class="photo-picker" onclick="document.getElementById('is-photo').click()">
+                <img id="preview-p" style="width:100%; height:100%; border-radius:50%; object-fit:cover; display:none;">
+                <span id="preview-t">📷<br><small>Photo</small></span>
+            </div>
+            <input type="file" id="is-photo" hidden accept="image/*" onchange="loadPhoto(this)">
+
+            <div class="form-group"><label>Student Name</label><input id="is-name" placeholder="e.g. Rahul Kumar"></div>
+            <div class="form-group"><label>Parent Name</label><input id="is-parent" placeholder="e.g. Suresh Kumar"></div>
+            <div class="form-group"><label>Phone</label><input type="tel" id="is-phone" placeholder="Optional"></div>
+            <div class="form-group"><label>Address</label><textarea id="is-addr" rows="2" placeholder="Optional"></textarea></div>
+            
+            <button class="btn" onclick="addStudent()">Create Profile</button>
+        </div>
+    </div>
+
+    <!-- Add Test -->
+    <div id="modal-test" class="modal-overlay">
+        <div class="modal">
+            <div class="header"><h2>Create Test</h2><span class="back-icon" onclick="closeModal('modal-test')">✕</span></div>
+            <div class="form-group"><label>Test Name</label><input id="it-name" placeholder="e.g. Weekly Math"></div>
+            <div class="form-group"><label>Max Marks</label><input type="number" id="it-max" placeholder="50"></div>
+            <button class="btn" onclick="addTest()">Create Test</button>
+        </div>
+    </div>
+
+    <!-- History / Pay / Details Modal -->
+    <div id="modal-hist" class="modal-overlay">
+        <div class="modal">
+            <div class="header"><h2 id="hm-title">History</h2><span class="back-icon" onclick="closeModal('modal-hist')">✕</span></div>
+            <div id="hm-content" style="max-height:300px; overflow-y:auto; margin-bottom:15px;"></div>
+            
+            <div id="hm-pay-sec" style="display:none; border-top:1px solid var(--border); padding-top:15px;">
+                <div class="form-group">
+                    <label>Record Payment</label>
+                    <div style="display:flex; gap:10px;">
+                        <input type="number" id="ip-amt" placeholder="Amount">
+                        <button class="btn" style="width:auto; margin:0;" onclick="payFee()">Pay</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Confirm/Alert Modal -->
+    <div id="modal-confirm" class="modal-overlay">
+        <div class="modal" style="width: 320px;">
+            <div class="header"><h2 id="cm-title">Confirm</h2></div>
+            <p id="cm-msg" style="color:var(--text-main);">Are you sure?</p>
+            
+            <div id="cm-actions" class="confirm-actions">
+                <button class="btn btn-cancel" onclick="closeModal('modal-confirm')">Cancel</button>
+                <button class="btn" id="cm-yes-btn">Confirm</button>
+            </div>
+            <!-- OK Button for Alert mode -->
+            <button id="cm-ok-btn" class="btn" style="display:none; margin-top:15px;" onclick="closeModal('modal-confirm')">OK</button>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA LAYER ---
+        const DB_KEY = 'MoralClasses_Pro';
+        let db = { batches: [], feeRun: '' };
+        let curB = null, curS = null, curT = null;
+        let tempImg = '';
+        let pendingAction = null; // For confirm callbacks
+
+        // --- INIT ---
+        window.onload = () => {
+            // Splash Screen Timer
+            setTimeout(() => {
+                const sp = document.getElementById('splash-screen');
+                sp.style.opacity = '0';
+                setTimeout(() => sp.style.display = 'none', 500);
+            }, 2500);
+
+            const d = localStorage.getItem(DB_KEY);
+            if(d) db = JSON.parse(d);
+            checkFees();
+            renderBatches();
+        };
+
+        function save() { localStorage.setItem(DB_KEY, JSON.stringify(db)); }
+        function getToday() { return new Date().toDateString(); }
+
+        // --- CUSTOM UI HELPERS ---
+        function customAlert(msg) {
+            document.getElementById('cm-title').innerText = 'Notice';
+            document.getElementById('cm-msg').innerText = msg;
+            document.getElementById('cm-actions').style.display = 'none';
+            document.getElementById('cm-ok-btn').style.display = 'block';
+            openModal('modal-confirm');
+        }
+
+        function customConfirm(msg, callback) {
+            document.getElementById('cm-title').innerText = 'Confirm';
+            document.getElementById('cm-msg').innerText = msg;
+            document.getElementById('cm-actions').style.display = 'flex';
+            document.getElementById('cm-ok-btn').style.display = 'none';
+            
+            // Set callback
+            const yesBtn = document.getElementById('cm-yes-btn');
+            yesBtn.onclick = () => {
+                callback();
+                closeModal('modal-confirm');
+            };
+            openModal('modal-confirm');
+        }
+
+        // --- NAVIGATION ---
+        function nav(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            window.scrollTo(0,0);
+        }
+        function openView(id) {
+            if(id === 'view-students') renderStudents();
+            if(id === 'view-attendance') renderAtt();
+            if(id === 'view-tests') renderTests();
+            if(id === 'view-fees') renderFees();
+            nav(id);
+        }
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        // --- BATCHES ---
+        function addBatch() {
+            const n = document.getElementById('ib-name').value;
+            // Get Time Inputs
+            const tStart = document.getElementById('ib-time-start').value;
+            const tEnd = document.getElementById('ib-time-end').value;
+            const f = document.getElementById('ib-fee').value;
+            
+            if(!n || !f) return customAlert("Name & Fee required");
+
+            // Format Time
+            let tStr = "";
+            if(tStart && tEnd) tStr = `${tStart} - ${tEnd}`;
+            else if(tStart) tStr = tStart;
+            else tStr = "No Time";
+
+            db.batches.push({
+                id: Date.now(), name: n, time: tStr, fee: parseInt(f),
+                students: [], att: {}, tests: []
+            });
+            save(); closeModal('modal-batch'); renderBatches();
+            
+            document.getElementById('ib-name').value = '';
+            document.getElementById('ib-time-start').value = '';
+            document.getElementById('ib-time-end').value = '';
+            document.getElementById('ib-fee').value = '';
+        }
+
+        function renderBatches() {
+            const list = document.getElementById('batch-list');
+            list.innerHTML = '';
+            if(!db.batches.length) document.getElementById('empty-state').style.display = 'block';
+            else document.getElementById('empty-state').style.display = 'none';
+
+            db.batches.forEach(b => {
+                const div = document.createElement('div');
+                div.className = 'card batch-card';
+                div.innerHTML = `
+                    <h3>${b.name}</h3>
+                    <div class="batch-info">🕒 ${b.time || '--:--'}</div>
+                    <div class="batch-info">👥 ${b.students.length} Students</div>
+                    <div class="batch-footer">
+                        <span>₹${b.fee}/mo</span>
+                        <div class="arrow-btn">➜</div>
+                    </div>
+                `;
+                div.onclick = () => {
+                    curB = b.id;
+                    document.getElementById('lbl-batch-name').innerText = b.name;
+                    document.getElementById('count-students').innerText = b.students.length;
+                    
+                    let totalDue = b.students.reduce((sum, s) => sum + s.dues, 0);
+                    document.getElementById('batch-total-due').innerText = '₹' + totalDue;
+                    nav('view-batch');
+                };
+                list.appendChild(div);
+            });
+        }
+
+        // --- STUDENTS ---
+        function loadPhoto(inp) {
+            if(inp.files[0]) {
+                const r = new FileReader();
+                r.onload = e => {
+                    tempImg = e.target.result;
+                    document.getElementById('preview-p').src = tempImg;
+                    document.getElementById('preview-p').style.display = 'block';
+                    document.getElementById('preview-t').style.display = 'none';
+                };
+                r.readAsDataURL(inp.files[0]);
+            }
+        }
+
+        function addStudent() {
+            const n = document.getElementById('is-name').value;
+            const p = document.getElementById('is-parent').value;
+            if(!n) return customAlert("Name required");
+            
+            const batch = db.batches.find(b => b.id === curB);
+            batch.students.push({
+                id: Date.now(), name: n, parent: p,
+                phone: document.getElementById('is-phone').value,
+                addr: document.getElementById('is-addr').value,
+                img: tempImg,
+                dues: batch.fee,
+                txns: []
+            });
+            save(); closeModal('modal-student'); renderStudents();
+            
+            document.getElementById('is-name').value = '';
+            document.getElementById('is-parent').value = '';
+            document.getElementById('is-phone').value = '';
+            document.getElementById('is-addr').value = '';
+            document.getElementById('is-photo').value = '';
+            tempImg = '';
+            document.getElementById('preview-p').style.display = 'none';
+            document.getElementById('preview-t').style.display = 'block';
+        }
+
+        function renderStudents() {
+            const list = document.getElementById('student-list');
+            list.innerHTML = '';
+            const batch = db.batches.find(b => b.id === curB);
+
+            batch.students.forEach(s => {
+                const div = document.createElement('div');
+                div.className = 'card';
+                div.style.display = 'flex'; div.style.alignItems='center'; div.style.gap='15px'; div.style.cursor='pointer';
+                const img = s.img ? `<img src="${s.img}" style="width:50px;height:50px;border-radius:50%;object-fit:cover;">` 
+                                  : `<div style="width:50px;height:50px;border-radius:50%;background:#cbd5e1;display:flex;align-items:center;justify-content:center;font-weight:bold;color:#fff;">${s.name[0]}</div>`;
+                
+                div.innerHTML = `
+                    ${img}
+                    <div>
+                        <div style="font-weight:700; color:var(--primary); font-size:1.05rem;">${s.name}</div>
+                        <div style="font-size:0.85rem; color:var(--text-light);">${s.parent}</div>
+                    </div>
+                `;
+                div.onclick = () => openProfile(s.id);
+                list.appendChild(div);
+            });
+        }
+
+        function openProfile(sid) {
+            curS = sid;
+            const batch = db.batches.find(b => b.id === curB);
+            const s = batch.students.find(x => x.id === sid);
+
+            document.getElementById('p-img').src = s.img || ''; 
+            document.getElementById('p-img').style.display = s.img ? 'block' : 'none';
+            document.getElementById('p-name').innerText = s.name;
+            document.getElementById('p-parent').innerText = 'Parent: ' + s.parent;
+            document.getElementById('p-contact').innerText = s.phone ? '📞 ' + s.phone : '📞 --';
+            document.getElementById('p-address').innerText = s.addr ? '📍 ' + s.addr : '📍 --';
+            
+            const dates = Object.keys(batch.att);
+            let p = 0;
+            dates.forEach(d => { if(batch.att[d][sid] === 'P') p++; });
+            const attPerc = dates.length ? Math.round((p/dates.length)*100) : 0;
+            document.getElementById('p-att-val').innerText = attPerc + '%';
+
+            let mSum=0, mCount=0;
+            batch.tests.forEach(t => {
+                if(t.results && t.results[sid] != null) { mSum += (t.results[sid]/t.max)*100; mCount++; }
+            });
+            const avg = mCount ? Math.round(mSum/mCount) : 0;
+            document.getElementById('p-mark-val').innerText = avg + '%';
+
+            document.getElementById('p-fee-val').innerText = '₹' + s.dues;
+
+            nav('view-profile');
+        }
+
+        function reqDeleteStudent() {
+            customConfirm("Delete Student? This cannot be undone.", () => {
+                const batch = db.batches.find(b => b.id === curB);
+                batch.students = batch.students.filter(s => s.id !== curS);
+                save(); nav('view-students');
+            });
+        }
+
+        // --- ATTENDANCE ---
+        function toggleAttMode(m) {
+            document.getElementById('att-mark-area').style.display = m==='mark'?'block':'none';
+            document.getElementById('att-hist-area').style.display = m==='hist'?'block':'none';
+            const btnM = document.getElementById('tab-mark');
+            const btnH = document.getElementById('tab-hist');
+            if(m==='mark') { btnM.style.background='#eff6ff'; btnM.style.color='var(--primary)'; btnH.style.background='transparent'; btnH.style.color='var(--text-main)'; renderAtt(); }
+            else { btnH.style.background='#eff6ff'; btnH.style.color='var(--primary)'; btnM.style.background='transparent'; btnM.style.color='var(--text-main)'; renderAttHist(); }
+        }
+
+        function renderAtt() {
+            const batch = db.batches.find(b => b.id === curB);
+            const today = getToday();
+            document.getElementById('lbl-today').innerText = today;
+            const locked = batch.att[today];
+            const list = document.getElementById('att-list');
+            const btn = document.getElementById('btn-submit-att');
+            const msg = document.getElementById('att-success-msg');
+            list.innerHTML = '';
+
+            if(locked) {
+                msg.style.display='block'; btn.style.display='none';
+                batch.students.forEach(s => {
+                    const st = locked[s.id];
+                    let cls = st==='P'?'success':(st==='A'?'danger':'warning');
+                    let txt = st==='P'?'Present':(st==='A'?'Absent':'Leave');
+                    list.innerHTML += `<div class="card" style="display:flex; justify-content:space-between; padding:12px;"><b>${s.name}</b><b style="color:var(--${cls})">${txt}</b></div>`;
+                });
+            } else {
+                msg.style.display='none'; btn.style.display='block';
+                batch.students.forEach(s => {
+                    const div = document.createElement('div');
+                    div.className = 'att-row';
+                    div.innerHTML = `
+                        <span style="font-weight:600;">${s.name}</span>
+                        <div class="att-controls" id="grp-${s.id}">
+                            <div class="att-btn present active" onclick="setAtt(${s.id}, 'P', this)">✔ Present</div>
+                            <div class="att-btn absent" onclick="setAtt(${s.id}, 'A', this)">✕ Absent</div>
+                            <div class="att-btn leave" onclick="setAtt(${s.id}, 'L', this)">! Leave</div>
+                        </div>
+                    `;
+                    list.appendChild(div);
+                });
+            }
+        }
+
+        function setAtt(sid, val, el) {
+            const grp = document.getElementById(`grp-${sid}`);
+            grp.querySelectorAll('.att-btn').forEach(b => b.classList.remove('active'));
+            el.classList.add('active');
+            el.dataset.val = val;
+        }
+
+        function reqSubmitAtt() {
+            customConfirm("Submit Attendance? This is final.", () => {
+                const batch = db.batches.find(b => b.id === curB);
+                const rec = {};
+                batch.students.forEach(s => {
+                    const grp = document.getElementById(`grp-${s.id}`);
+                    const act = grp.querySelector('.active');
+                    if(act.classList.contains('present')) rec[s.id] = 'P';
+                    else if(act.classList.contains('absent')) rec[s.id] = 'A';
+                    else rec[s.id] = 'L';
+                });
+                batch.att[getToday()] = rec;
+                save(); renderAtt();
+            });
+        }
+
+        function renderAttHist() {
+            const list = document.getElementById('att-hist-list');
+            list.innerHTML = '';
+            const batch = db.batches.find(b => b.id === curB);
+            const dates = Object.keys(batch.att).reverse();
+
+            dates.forEach(d => {
+                const rec = batch.att[d];
+                let p=0, a=0, l=0;
+                Object.values(rec).forEach(v => { if(v==='P')p++; else if(v==='A')a++; else l++; });
+                
+                const div = document.createElement('div');
+                div.className = 'card';
+                div.style.display = 'flex'; div.style.justifyContent='space-between'; div.style.cursor='pointer';
+                div.innerHTML = `
+                    <b>${d}</b>
+                    <div style="font-size:0.9rem;">
+                        <span style="color:var(--success)">P: ${p}</span> &nbsp;
+                        <span style="color:var(--danger)">A: ${a}</span> &nbsp;
+                        <span style="color:var(--warning)">L: ${l}</span>
+                    </div>
+                `;
+                // Add click event to show details
+                div.onclick = () => showAttDateDetails(d);
+                list.appendChild(div);
+            });
+        }
+
+        function showAttDateDetails(date) {
+            const batch = db.batches.find(b => b.id === curB);
+            const rec = batch.att[date];
+            if(!rec) return;
+
+            document.getElementById('hm-title').innerText = "Attendance: " + date;
+            const c = document.getElementById('hm-content');
+            document.getElementById('hm-pay-sec').style.display = 'none';
+            c.innerHTML = '';
+
+            // Group by Status
+            let present = [], absent = [], leave = [];
+            batch.students.forEach(s => {
+                const sVal = rec[s.id];
+                if(sVal === 'P') present.push(s.name);
+                else if(sVal === 'A') absent.push(s.name);
+                else if(sVal === 'L') leave.push(s.name);
+            });
+
+            const addSection = (title, arr, color) => {
+                if(arr.length === 0) return;
+                c.innerHTML += `<div style="font-weight:700; color:${color}; margin-top:10px; border-bottom:1px solid #eee;">${title} (${arr.length})</div>`;
+                arr.forEach(name => {
+                    c.innerHTML += `<div style="padding:4px 0;">${name}</div>`;
+                });
+            };
+
+            addSection("Present", present, "var(--success)");
+            addSection("Absent", absent, "var(--danger)");
+            addSection("Leave", leave, "var(--warning)");
+            
+            openModal('modal-hist');
+        }
+
+        // --- TESTS ---
+        function addTest() {
+            const n = document.getElementById('it-name').value;
+            const m = document.getElementById('it-max').value;
+            if(!n) return;
+            const batch = db.batches.find(b => b.id === curB);
+            batch.tests.push({ id: Date.now(), name: n, max: parseInt(m), results: {}, locked: false });
+            save(); closeModal('modal-test'); renderTests();
+            document.getElementById('it-name').value = '';
+            document.getElementById('it-max').value = '';
+        }
+
+        function renderTests() {
+            const list = document.getElementById('test-list');
+            list.innerHTML = '';
+            const batch = db.batches.find(b => b.id === curB);
+            
+            [...batch.tests].reverse().forEach(t => {
+                const div = document.createElement('div');
+                div.className = 'card';
+                div.innerHTML = `
+                    <div style="display:flex; justify-content:space-between;">
+                        <h3>${t.name}</h3>
+                        ${t.locked ? '<span style="color:var(--success)">Locked</span>' : '<span style="color:var(--accent)">Active</span>'}
+                    </div>
+                    <div style="color:var(--text-light); font-size:0.9rem;">Max Marks: ${t.max}</div>
+                `;
+                div.onclick = () => { curT = t.id; nav('view-marks'); renderMarks(); };
+                list.appendChild(div);
+            });
+        }
+
+        function renderMarks() {
+            const batch = db.batches.find(b => b.id === curB);
+            const t = batch.tests.find(x => x.id === curT);
+            const list = document.getElementById('marks-list');
+            const min = document.getElementById('f-min').value;
+            const max = document.getElementById('f-max').value;
+            
+            document.getElementById('lbl-test-name').innerText = t.name;
+            document.getElementById('btn-lock-marks').style.display = t.locked ? 'none' : 'block';
+            list.innerHTML = '';
+
+            let data = batch.students.map(s => ({ id: s.id, name: s.name, m: t.results[s.id] }));
+            if(t.locked) data.sort((a,b) => (b.m||0) - (a.m||0));
+
+            data.forEach(row => {
+                const val = row.m !== undefined ? row.m : '';
+                if(min && val !== '' && val < min) return;
+                if(max && val !== '' && val > max) return;
+
+                const div = document.createElement('div');
+                div.className = 'card';
+                div.style.display='flex'; div.style.justifyContent='space-between'; div.style.alignItems='center'; div.style.padding='10px 16px';
+                
+                let inputHTML = '';
+                if(t.locked) inputHTML = `<b style="font-size:1.1rem; color:var(--primary)">${val===''?'Abs':val}</b>`;
+                else inputHTML = `<input type="number" value="${val}" style="width:70px; padding:8px; text-align:center;" onchange="saveMark(${row.id}, this.value)">`;
+
+                div.innerHTML = `<span>${row.name}</span> ${inputHTML}`;
+                list.appendChild(div);
+            });
+        }
+
+        function saveMark(sid, val) {
+            const batch = db.batches.find(b => b.id === curB);
+            const t = batch.tests.find(x => x.id === curT);
+            t.results[sid] = parseFloat(val);
+            save();
+        }
+
+        function reqLockTest() {
+            customConfirm("Finalize marks? This cannot be edited later.", () => {
+                const batch = db.batches.find(b => b.id === curB);
+                const t = batch.tests.find(x => x.id === curT);
+                t.locked = true;
+                save(); renderMarks();
+            });
+        }
+
+        // --- FEES & HISTORY ---
+        function checkFees() {
+            const m = new Date().getMonth() + '-' + new Date().getFullYear();
+            if(db.feeRun !== m) {
+                db.batches.forEach(b => b.students.forEach(s => s.dues += b.fee));
+                db.feeRun = m;
+                save();
+            }
+        }
+
+        function renderFees() {
+            const list = document.getElementById('fee-list');
+            list.innerHTML = '';
+            const batch = db.batches.find(b => b.id === curB);
+
+            batch.students.forEach(s => {
+                const div = document.createElement('div');
+                let status = 'paid';
+                if(s.dues > 0 && s.dues < batch.fee) status = 'partial';
+                if(s.dues >= batch.fee) status = 'unpaid';
+
+                div.className = `fee-card ${status}`;
+                div.innerHTML = `
+                    <div>
+                        <div style="font-weight:700;">${s.name}</div>
+                        <div style="font-size:0.85rem; color:#475569;">${status.toUpperCase()}</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="font-weight:700; font-size:1.1rem;">₹${s.dues}</div>
+                        <button class="btn" style="width:auto; padding:6px 12px; margin-top:5px; font-size:0.8rem; background:white; color:var(--text-main); border:1px solid var(--border);" onclick="openHistory(${s.id}, true)">Pay</button>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function showHistory(type) {
+            const batch = db.batches.find(b => b.id === curB);
+            const s = batch.students.find(x => x.id === curS);
+            openHistory(s.id, type === 'fee', type === 'test');
+        }
+
+        // Specific function to show Student Attendance History (Present/Absent list)
+        function showStudentAttDetails() {
+            const batch = db.batches.find(b => b.id === curB);
+            const s = batch.students.find(x => x.id === curS);
+            document.getElementById('hm-title').innerText = s.name + " Attendance";
+            document.getElementById('hm-pay-sec').style.display = 'none';
+            const c = document.getElementById('hm-content');
+            c.innerHTML = '';
+
+            const dates = Object.keys(batch.att).reverse();
+            if(!dates.length) c.innerHTML = '<p>No attendance records.</p>';
+            
+            dates.forEach(d => {
+                const status = batch.att[d][curS];
+                if(status) {
+                    let stTxt = status==='P'?'Present':(status==='A'?'Absent':'Leave');
+                    let clr = status==='P'?'var(--success)':(status==='A'?'var(--danger)':'var(--warning)');
+                    c.innerHTML += `<div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #eee;"><span>${d}</span><b style="color:${clr}">${stTxt}</b></div>`;
+                }
+            });
+            openModal('modal-hist');
+        }
+
+        function openHistory(sid, showPay, showTest) {
+            curS = sid;
+            const batch = db.batches.find(b => b.id === curB);
+            const s = batch.students.find(x => x.id === sid);
+            
+            document.getElementById('hm-title').innerText = s.name + (showPay ? ' (Fees)' : ' History');
+            const c = document.getElementById('hm-content');
+            const paySec = document.getElementById('hm-pay-sec');
+            c.innerHTML = '';
+            paySec.style.display = showPay ? 'block' : 'none';
+
+            if(showPay) {
+                if(!s.txns || !s.txns.length) c.innerHTML = '<p style="color:#94a3b8; text-align:center;">No payments yet.</p>';
+                else {
+                    [...s.txns].reverse().forEach(tx => {
+                        c.innerHTML += `<div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #eee;"><span>${tx.date}</span><b style="color:var(--success)">+ ₹${tx.amt}</b></div>`;
+                    });
+                }
+            } else if (showTest) {
+                // Show Tests
+                c.innerHTML = '<p style="font-weight:600;">Test Results:</p>';
+                batch.tests.forEach(t => {
+                    if(t.results && t.results[sid] !== undefined) {
+                        c.innerHTML += `<div style="display:flex; justify-content:space-between; padding:8px 0;"><span>${t.name}</span><b>${t.results[sid]} / ${t.max}</b></div>`;
+                    }
+                });
+            }
+            openModal('modal-hist');
+        }
+
+        function payFee() {
+            const amt = parseInt(document.getElementById('ip-amt').value);
+            if(!amt) return;
+            const batch = db.batches.find(b => b.id === curB);
+            const s = batch.students.find(x => x.id === curS);
+            
+            s.dues -= amt;
+            s.txns.push({ date: getToday(), amt: amt });
+            save();
+            document.getElementById('ip-amt').value = '';
+            openHistory(curS, true, false); 
+            
+            if(document.getElementById('view-fees').classList.contains('active')) renderFees();
+            if(document.getElementById('view-profile').classList.contains('active')) openProfile(curS);
+        }
+
+    </script>
+</body>
+</html>
